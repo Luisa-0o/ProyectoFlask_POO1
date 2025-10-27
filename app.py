@@ -4,30 +4,41 @@ from models import db, User
 from forms import RegisterForm, LoginForm, ChangePasswordForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+import os
 
+# Cargar variables desde .env
+load_dotenv()
+
+# Crear la app Flask
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Inicializar extensiones
 db.init_app(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Crear tablas si no existen
 with app.app_context():
     db.create_all()
 
+# --- Configuración de Login ---
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# --- Rutas ---
 @app.route('/')
 def index():
     return render_template('profile.html')
 
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    
     form = RegisterForm()
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
@@ -38,10 +49,11 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -60,7 +72,7 @@ def logout():
     flash('Sesión cerrada.', 'info')
     return redirect(url_for('login'))
 
-@app.route('/change-password', methods=['GET','POST'])
+@app.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
     form = ChangePasswordForm()
@@ -68,23 +80,32 @@ def change_password():
         if not current_user.check_password(form.current_password.data):
             flash('Contraseña actual incorrecta.', 'danger')
             return render_template('change_password.html', form=form)
+        
         current_user.set_password(form.new_password.data)
         db.session.commit()
         flash('Contraseña actualizada correctamente.', 'success')
         return redirect(url_for('index'))
     return render_template('change_password.html', form=form)
 
-# solo visible para admin
 @app.route('/admin')
 @login_required
 def admin():
-    if not current_user.is_admin:
+    if not getattr(current_user, 'is_admin', False):
         flash('No tienes permiso para acceder a esta página.', 'danger')
         return redirect(url_for('index'))
     
     users = User.query.all()
     return render_template('admin.html', users=users)
 
+# --- Prueba de conexión a la BD ---
+@app.route('/test-db')
+def test_db():
+    try:
+        db.session.execute("SELECT 1")
+        return "✅ Conexión exitosa a la base de datos"
+    except Exception as e:
+        return f"❌ Error al conectar: {str(e)}"
 
+# --- Ejecutar la aplicación ---
 if __name__ == '__main__':
     app.run(debug=True)
