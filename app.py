@@ -14,6 +14,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config.from_object(Config)
 
+
 # Inicializar extensiones
 db.init_app(app)
 migrate = Migrate(app, db)
