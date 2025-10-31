@@ -6,13 +6,15 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-import os
-from functools import wraps
-import errno
+from urllib.parse import urlparse, urljoin
 from sqlalchemy.exc import SQLAlchemyError
+import os
+import logging
+from functools import wraps
 
 # --- Configuración inicial ---
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -26,10 +28,20 @@ login_manager.login_view = 'login'
 with app.app_context():
     db.create_all()
 
+# --- Función de seguridad para evitar redirecciones abiertas ---
+def is_safe_url(target):
+    """Verifica que la URL sea interna a la aplicación."""
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return (
+        test_url.scheme in ('http', 'https') and
+        ref_url.netloc == test_url.netloc
+    )
+
 # --- Manejo de Login ---
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))  # versión actualizada para SQLAlchemy 2.x
+    return db.session.get(User, int(user_id))  # versión actualizada SQLAlchemy 2.x
 
 # --- Decorador para admin ---
 def admin_required(fn):
@@ -38,7 +50,7 @@ def admin_required(fn):
         if not current_user.is_authenticated:
             flash('Primero inicia sesión.', 'warning')
             return redirect(url_for('login'))
-        if not getattr(current_user, 'is_admin', False):
+        if not getattr(current_user, 'is_admin', False) and getattr(current_user, 'role', 'user') != 'admin':
             flash('Acceso denegado. Solo administradores.', 'danger')
             return redirect(url_for('index'))
         return fn(*args, **kwargs)
@@ -47,7 +59,7 @@ def admin_required(fn):
 # --- Rutas principales ---
 @app.route('/')
 def index():
-    return render_template('profile.html')
+    return render_template('profile.html', user=current_user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -58,6 +70,8 @@ def register():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
+        if User.query.count() == 0:
+            user.role = 'admin'  # Primer usuario será admin (opcional)
         db.session.add(user)
         db.session.commit()
         flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
@@ -75,8 +89,14 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             flash('Has ingresado correctamente.', 'success')
+
+            # ✅ Validación segura de la redirección
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('index'))
+            if next_page and is_safe_url(next_page):
+                return redirect(next_page)
+            else:
+                return redirect(url_for('index'))
+
         flash('Correo o contraseña incorrectos.', 'danger')
     return render_template('login.html', form=form)
 
@@ -126,11 +146,15 @@ def create_book():
     if form.validate_on_submit():
         filename = None
         if form.cover.data:
-            f = form.cover.data
-            filename = secure_filename(f.filename)
-            upload_folder = os.path.join('static', 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            f.save(os.path.join(upload_folder, filename))
+            try:
+                f = form.cover.data
+                filename = secure_filename(f.filename)
+                upload_folder = os.path.join('static', 'uploads')
+                os.makedirs(upload_folder, exist_ok=True)
+                f.save(os.path.join(upload_folder, filename))
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                app.logger.error(f"Error al guardar la imagen: {e}")
+                flash("Error al guardar la imagen.", "danger")
 
         book = Book(
             title=form.title.data,
@@ -154,12 +178,16 @@ def edit_book(book_id):
     form = BookForm(obj=book)
     if form.validate_on_submit():
         if form.cover.data:
-            f = form.cover.data
-            filename = secure_filename(f.filename)
-            upload_folder = os.path.join('static', 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            f.save(os.path.join(upload_folder, filename))
-            book.cover_filename = filename
+            try:
+                f = form.cover.data
+                filename = secure_filename(f.filename)
+                upload_folder = os.path.join('static', 'uploads')
+                os.makedirs(upload_folder, exist_ok=True)
+                f.save(os.path.join(upload_folder, filename))
+                book.cover_filename = filename
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                app.logger.error(f"Error al actualizar la imagen: {e}")
+                flash("Error al actualizar la imagen.", "danger")
 
         book.title = form.title.data
         book.author = form.author.data
@@ -181,14 +209,8 @@ def delete_book(book_id):
         if os.path.exists(path):
             try:
                 os.remove(path)
-            except FileNotFoundError:
-                app.logger.warning(f"Archivo ya no existe: {path}")
-            except PermissionError:
-                app.logger.error(f"Permiso denegado al eliminar: {path}")
-            except OSError as e:
-                if e.errno != errno.ENOENT:
-                    app.logger.error(f"Error al eliminar {path}: {e}")
-        raise
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                app.logger.warning(f"No se pudo eliminar la portada: {e}")
     db.session.delete(book)
     db.session.commit()
     flash('Libro eliminado.', 'success')
@@ -270,12 +292,12 @@ def test_db():
         return "✅ Conexión exitosa a la base de datos"
     except SQLAlchemyError as e:
         app.logger.error(f"Error de base de datos: {e}")
-        return f"❌ Error al conectar a la base de datos"
+        return "❌ Error al conectar a la base de datos"
     except SystemExit as e:
-        app.logger.critical("SystemExit detectado, re-lanzando.")
+        app.logger.critical("SystemExit detectado, relanzando.")
         raise e
     except BaseException as e:
-        app.logger.exception("Error inesperado crítico, relanzando.")
+        app.logger.exception("Error inesperado crítico.")
         raise e
 
 # --- Ejecutar aplicación ---
