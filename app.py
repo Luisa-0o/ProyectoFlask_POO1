@@ -89,16 +89,14 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             flash('Has ingresado correctamente.', 'success')
-
-            # ✅ Validación segura de la redirección
-            next_page = request.args.get('next')
-            if next_page and is_safe_url(next_page):
-                return redirect(next_page)
-            else:
-                return redirect(url_for('index'))
-
+            
+            # 🚫 Eliminamos redirección basada en datos del usuario
+            # En lugar de usar request.args.get('next'), siempre mandamos a una ruta segura
+            return redirect(url_for('index'))
+        
         flash('Correo o contraseña incorrectos.', 'danger')
     return render_template('login.html', form=form)
+
 
 @app.route('/logout')
 @login_required
