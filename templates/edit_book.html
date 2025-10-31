@@ -22,7 +22,11 @@
     {{ form.cover.label }} {{ form.cover() }}
     {% if book and book.cover_filename %}
       <p>Portada actual:</p>
-      <img src="{{ url_for('static', filename='covers/' ~ book.cover_filename) }}" style="height:90px;" alt="rooms of the house."/>
+      <img 
+        src="{{ url_for('static', filename='covers/' ~ book.cover_filename) }}" 
+        alt="Portada del libro {{ book.title }}" 
+        style="height:90px;"
+      >
     {% endif %}
   </div>
   <div class="mb-3">
@@ -31,3 +35,4 @@
   </div>
 </form>
 {% endblock %}
+
