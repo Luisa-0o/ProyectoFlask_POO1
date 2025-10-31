@@ -183,7 +183,7 @@ def edit_book(book_id):
                 os.makedirs(upload_folder, exist_ok=True)
                 f.save(os.path.join(upload_folder, filename))
                 book.cover_filename = filename
-            except (FileNotFoundError, PermissionError, OSError) as e:
+            except (OSError) as e:
                 app.logger.error(f"Error al actualizar la imagen: {e}")
                 flash("Error al actualizar la imagen.", "danger")
 
@@ -207,7 +207,7 @@ def delete_book(book_id):
         if os.path.exists(path):
             try:
                 os.remove(path)
-            except (FileNotFoundError, PermissionError, OSError) as e:
+            except (OSError) as e:
                 app.logger.warning(f"No se pudo eliminar la portada: {e}")
     db.session.delete(book)
     db.session.commit()
