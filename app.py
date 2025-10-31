@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import os
 from functools import wraps
+import errno
+from sqlalchemy.exc import SQLAlchemyError
 
 # --- Configuración inicial ---
 load_dotenv()
@@ -27,7 +29,7 @@ with app.app_context():
 # --- Manejo de Login ---
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))  # versión actualizada SQLAlchemy 2.x
+    return db.session.get(User, int(user_id))  # versión actualizada para SQLAlchemy 2.x
 
 # --- Decorador para admin ---
 def admin_required(fn):
@@ -36,8 +38,7 @@ def admin_required(fn):
         if not current_user.is_authenticated:
             flash('Primero inicia sesión.', 'warning')
             return redirect(url_for('login'))
-        # 🔹 Aseguramos compatibilidad tanto si usas "is_admin" como "role"
-        if not getattr(current_user, 'is_admin', False) and getattr(current_user, 'role', 'user') != 'admin':
+        if not getattr(current_user, 'is_admin', False):
             flash('Acceso denegado. Solo administradores.', 'danger')
             return redirect(url_for('index'))
         return fn(*args, **kwargs)
@@ -46,8 +47,7 @@ def admin_required(fn):
 # --- Rutas principales ---
 @app.route('/')
 def index():
-    # 🔹 Aseguramos que el botón de admin aparezca según el rol
-    return render_template('profile.html', user=current_user)
+    return render_template('profile.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -58,9 +58,6 @@ def register():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
-        # 🔹 El primer usuario registrado será admin automáticamente (opcional)
-        if User.query.count() == 0:
-            user.role = 'admin'
         db.session.add(user)
         db.session.commit()
         flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
@@ -184,8 +181,14 @@ def delete_book(book_id):
         if os.path.exists(path):
             try:
                 os.remove(path)
-            except:
-                pass
+            except FileNotFoundError:
+                app.logger.warning(f"Archivo ya no existe: {path}")
+            except PermissionError:
+                app.logger.error(f"Permiso denegado al eliminar: {path}")
+            except OSError as e:
+                if e.errno != errno.ENOENT:
+                    app.logger.error(f"Error al eliminar {path}: {e}")
+        raise
     db.session.delete(book)
     db.session.commit()
     flash('Libro eliminado.', 'success')
@@ -265,8 +268,15 @@ def test_db():
     try:
         db.session.execute("SELECT 1")
         return "✅ Conexión exitosa a la base de datos"
-    except Exception as e:
-        return f"❌ Error al conectar: {str(e)}"
+    except SQLAlchemyError as e:
+        app.logger.error(f"Error de base de datos: {e}")
+        return f"❌ Error al conectar a la base de datos"
+    except SystemExit as e:
+        app.logger.critical("SystemExit detectado, re-lanzando.")
+        raise e
+    except BaseException as e:
+        app.logger.exception("Error inesperado crítico, relanzando.")
+        raise e
 
 # --- Ejecutar aplicación ---
 if __name__ == '__main__':
