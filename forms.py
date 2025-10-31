@@ -2,6 +2,9 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from models import User
+from flask_wtf.file import FileField, FileAllowed
+from wtforms import IntegerField, FloatField, TextAreaField
+from wtforms.validators import NumberRange, Optional
 
 class RegisterForm(FlaskForm):
     username = StringField('Nombre', validators=[DataRequired(), Length(3,80)])
@@ -28,3 +31,12 @@ class ChangePasswordForm(FlaskForm):
     new_password = PasswordField('Nueva contraseña', validators=[DataRequired(), Length(6,128)])
     new_password2 = PasswordField('Confirmar nueva contraseña', validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Cambiar contraseña')
+
+class BookForm(FlaskForm):
+    title = StringField('Título', validators=[DataRequired(), Length(max=200)])
+    author = StringField('Autor', validators=[DataRequired(), Length(max=200)])
+    price = FloatField('Precio', validators=[DataRequired(), NumberRange(min=0)])
+    stock = IntegerField('Stock', validators=[DataRequired(), NumberRange(min=0)])
+    description = TextAreaField('Descripción', validators=[Optional(), Length(max=2000)])
+    cover = FileField('Portada (opcional)', validators=[Optional(), FileAllowed(['jpg','jpeg','png'], 'Solo imágenes')])
+    submit = SubmitField('Guardar')

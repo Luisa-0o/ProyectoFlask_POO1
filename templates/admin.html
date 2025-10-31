@@ -3,6 +3,9 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">Panel de Administración</h1>
+    <a href="{{ url_for('admin_books') }}" class="btn btn-info mb-3">Gestionar Libros</a>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-info mb-3">👥 Gestionar Usuarios</a>
+
 
     <p>Bienvenido, {{ current_user.username }} (Admin)</p>
 

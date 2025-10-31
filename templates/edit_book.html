@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ action }} libro</h2>
+<form method="POST" enctype="multipart/form-data">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.title.label }} {{ form.title(class="form-control") }}
+  </div>
+  <div class="mb-3">
+    {{ form.author.label }} {{ form.author(class="form-control") }}
+  </div>
+  <div class="mb-3">
+    {{ form.price.label }} {{ form.price(class="form-control") }}
+  </div>
+  <div class="mb-3">
+    {{ form.stock.label }} {{ form.stock(class="form-control") }}
+  </div>
+  <div class="mb-3">
+    {{ form.description.label }} {{ form.description(class="form-control", rows=4) }}
+  </div>
+  <div class="mb-3">
+    {{ form.cover.label }} {{ form.cover() }}
+    {% if book and book.cover_filename %}
+      <p>Portada actual:</p>
+      <img src="{{ url_for('static', filename='covers/' ~ book.cover_filename) }}" style="height:90px;">
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('admin_books') }}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

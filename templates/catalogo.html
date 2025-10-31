@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>📚 Catálogo de libros</h2>
+
+  <!-- Formulario de búsqueda -->
+  <form method="GET" action="{{ url_for('catalogo') }}" class="d-flex my-3">
+    <input class="form-control me-2" type="search" name="q" placeholder="Buscar por título o autor" value="{{ query }}">
+    <button class="btn btn-primary" type="submit">Buscar</button>
+  </form>
+
+  <!-- Lista de libros -->
+  <div class="row">
+    {% if books %}
+      {% for book in books %}
+        <div class="col-md-3 mb-4">
+          <div class="card h-100">
+            {% if book.cover_filename %}
+              <img src="{{ url_for('static', filename='uploads/' ~ book.cover_filename) }}" class="card-img-top" alt="{{ book.title }}">
+            {% else %}
+              <img src="{{ url_for('static', filename='no_cover.png') }}" class="card-img-top" alt="Sin portada">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ book.title }}</h5>
+              <p class="card-text">Autor: {{ book.author }}</p>
+              <p class="card-text"><strong>${{ "%.2f"|format(book.price) }}</strong></p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted">No se encontraron libros con esa búsqueda.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
