@@ -150,7 +150,7 @@ def create_book():
                 upload_folder = os.path.join('static', 'uploads')
                 os.makedirs(upload_folder, exist_ok=True)
                 f.save(os.path.join(upload_folder, filename))
-            except (FileNotFoundError, OSError) as e:
+            except (OSError) as e:
                 app.logger.error(f"Error al guardar la imagen: {e}")
                 flash("Error al guardar la imagen.", "danger")
 
