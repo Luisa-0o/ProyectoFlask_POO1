@@ -27,7 +27,7 @@ with app.app_context():
 # --- Manejo de Login ---
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))  # versión actualizada para SQLAlchemy 2.x
+    return db.session.get(User, int(user_id))  # versión actualizada SQLAlchemy 2.x
 
 # --- Decorador para admin ---
 def admin_required(fn):
@@ -36,7 +36,8 @@ def admin_required(fn):
         if not current_user.is_authenticated:
             flash('Primero inicia sesión.', 'warning')
             return redirect(url_for('login'))
-        if not getattr(current_user, 'is_admin', False):
+        # 🔹 Aseguramos compatibilidad tanto si usas "is_admin" como "role"
+        if not getattr(current_user, 'is_admin', False) and getattr(current_user, 'role', 'user') != 'admin':
             flash('Acceso denegado. Solo administradores.', 'danger')
             return redirect(url_for('index'))
         return fn(*args, **kwargs)
@@ -45,7 +46,8 @@ def admin_required(fn):
 # --- Rutas principales ---
 @app.route('/')
 def index():
-    return render_template('profile.html')
+    # 🔹 Aseguramos que el botón de admin aparezca según el rol
+    return render_template('profile.html', user=current_user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -56,6 +58,9 @@ def register():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
+        # 🔹 El primer usuario registrado será admin automáticamente (opcional)
+        if User.query.count() == 0:
+            user.role = 'admin'
         db.session.add(user)
         db.session.commit()
         flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
