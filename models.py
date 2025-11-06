@@ -42,3 +42,67 @@ class Book(db.Model):
 
     def __repr__(self):
         return f'<Book {self.title}>'
+
+# ---------------------------
+# Carrito y Pedidos
+# ---------------------------
+ 
+class Cart(db.Model):
+    __tablename__ = 'carts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    # relación con usuario (uno a uno: cada usuario tiene un carrito)
+    user = db.relationship('User', backref=db.backref('cart', uselist=False))
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+ 
+    def __repr__(self):
+        return f'<Cart user_id={self.user_id}>'
+ 
+ 
+class CartItem(db.Model):
+    __tablename__ = 'cart_items'
+    id = db.Column(db.Integer, primary_key=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+ 
+    cart = db.relationship('Cart', backref=db.backref('items', cascade='all, delete-orphan'))
+    book = db.relationship('Book')
+ 
+    def line_total(self):
+        return (self.book.price or 0) * (self.quantity or 0)
+ 
+    def __repr__(self):
+        return f'<CartItem book_id={self.book_id} qty={self.quantity}>'
+ 
+ 
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    status = db.Column(db.String(50), default='created')  # created, paid, shipped, cancelled...
+    total = db.Column(db.Float, default=0.0)
+ 
+    user = db.relationship('User', backref=db.backref('orders', order_by='Order.id.desc()'))
+ 
+    def __repr__(self):
+        return f'<Order id={self.id} user_id={self.user_id} total={self.total}>'
+ 
+ 
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    price = db.Column(db.Float, nullable=False)  # precio unitario al momento del pedido
+ 
+    order = db.relationship('Order', backref=db.backref('items', cascade='all, delete-orphan'))
+    book = db.relationship('Book')
+ 
+    def line_total(self):
+        return (self.price or 0) * (self.quantity or 0)
+ 
+    def __repr__(self):
+        return f'<OrderItem book_id={self.book_id} qty={self.quantity} price={self.price}>'
