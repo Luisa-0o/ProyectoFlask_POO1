@@ -388,7 +388,7 @@ def checkout():
         db.session.flush()
 
         total = 0.0
-        for item in list(cart.items):
+        for item in cart.items:
             item.book.stock -= item.quantity
             price = item.book.price or 0.0
             order_item = OrderItem(order_id=order.id, book_id=item.book_id, quantity=item.quantity, price=price)
