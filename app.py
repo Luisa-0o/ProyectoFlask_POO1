@@ -402,7 +402,7 @@ def checkout():
         return redirect(url_for('payment'))
 
     
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.session.rollback()
         app.logger.exception("Error al crear el pedido")
         flash('Ocurrió un error creando el pedido.', 'danger')
