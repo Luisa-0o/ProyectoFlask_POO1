@@ -18,7 +18,11 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
       <div class="container">
         <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
-          <i class="bi bi-bag-heart-fill text-primary"></i> VerseBook
+          <img src="{{ url_for('static', filename='logo.jpg') }}" 
+         alt="VerseBook Logo" 
+         width="35" height="35" 
+         class="me-2">
+        <span class="fw-bold text-primary">VerseBook</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
           <span class="navbar-toggler-icon"></span>
