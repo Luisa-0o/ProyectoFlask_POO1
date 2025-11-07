@@ -25,8 +25,8 @@
                  alt="{{ item.book.title }}" class="img-thumbnail" 
                  style="width: 80px; height: 100px; object-fit: cover;">
           {% else %}
-            <img src="{{ url_for('static') }}" 
-                 alt="Sin imagen" class="img-thumbnail" 
+            <img src="{{ url_for('static', filename='no_image.png') }}" 
+                 alt="Sin foro" class="img-thumbnail" 
                  style="width: 80px; height: 100px;">
           {% endif %}
         </td>
