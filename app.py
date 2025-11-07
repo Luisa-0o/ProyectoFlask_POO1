@@ -451,10 +451,10 @@ def test_db():
 @login_required
 def payment():
     if request.method == 'POST':
-        payment_method = request.form.get('payment_method')
-        card_number = request.form.get('card_number')
-        expiry_date = request.form.get('expiry_date')
-        cvv = request.form.get('cvv')
+        request.form.get('payment_method')
+        request.form.get('card_number')
+        request.form.get('expiry_date')
+        request.form.get('cvv')
 
         # Aquí puedes agregar lógica para validar o registrar el pago.
         flash('✅ Pago procesado correctamente. ¡Gracias por tu compra!', 'success')
