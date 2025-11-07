@@ -1,19 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Detalle del Pedido{% endblock %}
+{% block title %}Detalle Pedido #{{ order.id }}{% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h2 class="text-center mb-4">🧾 Pedido #{{ order.id }}</h2>
+  <h2 class="mb-4">Detalle del Pedido #{{ order.id }}</h2>
 
-  <p><strong>Fecha:</strong> {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
-  <p><strong>Estado:</strong> {{ order.status }}</p>
+  <p><strong>Fecha:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '-' }}</p>
+  <p><strong>Estado:</strong> {{ order.status or 'Pendiente' }}</p>
 
-  <table class="table table-bordered text-center align-middle">
+  <table class="table">
     <thead class="table-dark">
       <tr>
-        <th>Libro</th>
-        <th>Cantidad</th>
-        <th>Precio Unitario</th>
-        <th>Subtotal</th>
+        <th>Libro</th><th>Cantidad</th><th>Precio unidad</th><th>Subtotal</th>
       </tr>
     </thead>
     <tbody>
@@ -28,9 +25,9 @@
     </tbody>
   </table>
 
-  <h4 class="text-end mt-3">Total: ${{ "%.2f"|format(order.total) }}</h4>
-  <div class="text-center mt-4">
-    <a href="{{ url_for('orders') }}" class="btn btn-secondary">Volver al Historial</a>
+  <h4 class="text-end">Total: ${{ "%.2f"|format(order.total or 0) }}</h4>
+  <div class="text-center mt-3">
+    <a href="{{ url_for('view_orders') }}" class="btn btn-secondary">Volver al Historial</a>
   </div>
 </div>
 {% endblock %}

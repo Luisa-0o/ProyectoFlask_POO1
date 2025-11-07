@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Pago{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">💳 Procesar Pago</h2>
+
+  <form method="POST" class="p-4 border rounded shadow-sm bg-light">
+    <div class="mb-3">
+      <label for="payment_method" class="form-label">Método de pago</label>
+      <select name="payment_method" id="payment_method" class="form-select" required>
+        <option value="">Seleccione un método</option>
+        <option value="visa">Visa</option>
+        <option value="mastercard">MasterCard</option>
+        <option value="efecty">Efecty</option>
+      </select>
+    </div>
+
+    <!-- Campos para tarjeta -->
+    <div id="cardFields">
+      <div class="mb-3">
+        <label for="card_number" class="form-label">Número de Tarjeta</label>
+        <input type="text" class="form-control" id="card_number" name="card_number" placeholder="1234 5678 9012 3456">
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="expiry_date" class="form-label">Fecha de Expiración</label>
+          <input type="text" class="form-control" id="expiry_date" name="expiry_date" placeholder="MM/AA">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="cvv" class="form-label">CVV</label>
+          <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123">
+        </div>
+      </div>
+    </div>
+
+    <div id="efectyInfo" style="display:none;">
+      <div class="alert alert-warning mt-3">
+        Para pagar con <strong>Efecty</strong>, recibirás un código para presentarlo en un punto Efecty.
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success w-100 mt-3">Confirmar Pago</button>
+  </form>
+</div>
+
+<script>
+  // Mostrar u ocultar los campos según el método de pago
+  const select = document.getElementById('payment_method');
+  const cardFields = document.getElementById('cardFields');
+  const efectyInfo = document.getElementById('efectyInfo');
+
+  select.addEventListener('change', function() {
+    if (this.value === 'efecty') {
+      cardFields.style.display = 'none';
+      efectyInfo.style.display = 'block';
+    } else if (this.value === 'visa' || this.value === 'mastercard') {
+      cardFields.style.display = 'block';
+      efectyInfo.style.display = 'none';
+    } else {
+      cardFields.style.display = 'none';
+      efectyInfo.style.display = 'none';
+    }
+  });
+</script>
+{% endblock %}

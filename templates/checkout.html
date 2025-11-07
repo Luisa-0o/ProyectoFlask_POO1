@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">💳 Pago del pedido</h2>
+
+  <form method="POST" action="{{ url_for('process_payment') }}">
+    {{ csrf_token() }}
+
+    <!-- Información del comprador -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Datos del comprador</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="name" class="form-label">Nombre completo</label>
+            <input type="text" class="form-control" name="name" id="name" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="address" class="form-label">Dirección</label>
+            <input type="text" class="form-control" name="address" id="address" required>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selección de método de pago -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Método de pago</h5>
+
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="payment_method" id="visa" value="Visa" required>
+          <label class="form-check-label" for="visa">
+            💳 Visa
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="payment_method" id="mastercard" value="MasterCard" required>
+          <label class="form-check-label" for="mastercard">
+            💳 MasterCard
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="payment_method" id="efecty" value="Efecty" required>
+          <label class="form-check-label" for="efecty">
+            💵 Efecty (pago en punto físico)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos de la tarjeta (solo si es tarjeta) -->
+    <div id="card-info" class="card mb-3 shadow-sm" style="display:none;">
+      <div class="card-body">
+        <h5 class="card-title">Datos de la tarjeta</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="card_number" class="form-label">Número de tarjeta</label>
+            <input type="text" class="form-control" name="card_number" id="card_number" maxlength="16" pattern="\d{16}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="expiry" class="form-label">Expira</label>
+            <input type="text" class="form-control" name="expiry" id="expiry" placeholder="MM/AA">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="cvv" class="form-label">CVV</label>
+            <input type="text" class="form-control" name="cvv" id="cvv" maxlength="3" pattern="\d{3}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón confirmar -->
+    <div class="d-flex justify-content-between">
+      <a href="{{ url_for('view_cart') }}" class="btn btn-secondary">⬅️ Volver al carrito</a>
+      <button type="submit" class="btn btn-success">✅ Confirmar pago</button>
+    </div>
+  </form>
+</div>
+
+<!-- Mostrar/ocultar campos de tarjeta -->
+<script>
+document.querySelectorAll('input[name="payment_method"]').forEach(el => {
+  el.addEventListener('change', e => {
+    const cardSection = document.getElementById('card-info');
+    if (e.target.value === 'Visa' || e.target.value === 'MasterCard') {
+      cardSection.style.display = 'block';
+    } else {
+      cardSection.style.display = 'none';
+    }
+  });
+});
+</script>
+{% endblock %}

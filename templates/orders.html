@@ -18,21 +18,19 @@
     <tbody>
       {% for order in orders %}
       <tr>
-        <td>#{{ order.id }}</td>
-        <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-        <td>{{ order.status }}</td>
-        <td>${{ "%.2f"|format(order.total) }}</td>
+        <td>{{ order.id }}</td>
+        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '-' }}</td>
+        <td>{{ order.status or 'Pendiente' }}</td>
+        <td>${{ "%.2f"|format(order.total or 0) }}</td>
         <td>
-          <a href="{{ url_for('view_order', order_id=order.id) }}" class="btn btn-sm btn-primary">Ver Detalle</a>
+          <a href="{{ url_for('view_order', order_id=order.id) }}" class="btn btn-sm btn-primary">Ver</a>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
-  <div class="alert alert-info text-center">
-    Aún no has realizado ningún pedido.
-  </div>
+  <div class="alert alert-info">No tienes pedidos aún.</div>
   {% endif %}
 </div>
 {% endblock %}

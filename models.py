@@ -1,8 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import url_for  # ✅ necesario para image_url()
 
 db = SQLAlchemy()
+
+# ---------------------------
+# MODELO DE USUARIO
+# ---------------------------
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -29,53 +34,75 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
+
+# ---------------------------
+# MODELO DE LIBRO
+# ---------------------------
+
 class Book(db.Model):
     __tablename__ = 'books'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    author = db.Column(db.String(200), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    author = db.Column(db.String(120), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    stock = db.Column(db.Integer, default=0)
+    stock = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
-    cover_filename = db.Column(db.String(300))  # nombre del archivo de la portada
+    cover_filename = db.Column(db.String(255))  # nombre de archivo de la portada
+
+    def image_url(self):
+        """Devuelve la URL de la imagen o una por defecto"""
+        if self.cover_filename:
+            return url_for('static', filename=f'uploads/{self.cover_filename}')
+        return url_for('static', filename='no_cover.png')
 
     def __repr__(self):
         return f'<Book {self.title}>'
 
+
 # ---------------------------
-# Carrito y Pedidos
+# MODELO DE CARRITO
 # ---------------------------
- 
+
 class Cart(db.Model):
     __tablename__ = 'carts'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
-    # relación con usuario (uno a uno: cada usuario tiene un carrito)
-    user = db.relationship('User', backref=db.backref('cart', uselist=False))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
- 
+
+    # relación uno a uno con el usuario
+    user = db.relationship('User', backref=db.backref('cart', uselist=False))
+
     def __repr__(self):
         return f'<Cart user_id={self.user_id}>'
- 
- 
+
+
+# ---------------------------
+# MODELO DE ITEMS DEL CARRITO
+# ---------------------------
+
 class CartItem(db.Model):
     __tablename__ = 'cart_items'
     id = db.Column(db.Integer, primary_key=True)
     cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=1)
- 
+
     cart = db.relationship('Cart', backref=db.backref('items', cascade='all, delete-orphan'))
     book = db.relationship('Book')
- 
+
     def line_total(self):
+        """Subtotal del ítem"""
         return (self.book.price or 0) * (self.quantity or 0)
- 
+
     def __repr__(self):
         return f'<CartItem book_id={self.book_id} qty={self.quantity}>'
- 
- 
+
+
+# ---------------------------
+# MODELOS DE PEDIDO
+# ---------------------------
+
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
@@ -83,26 +110,27 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     status = db.Column(db.String(50), default='created')  # created, paid, shipped, cancelled...
     total = db.Column(db.Float, default=0.0)
- 
+
     user = db.relationship('User', backref=db.backref('orders', order_by='Order.id.desc()'))
- 
+
     def __repr__(self):
         return f'<Order id={self.id} user_id={self.user_id} total={self.total}>'
- 
- 
+
+
 class OrderItem(db.Model):
     __tablename__ = 'order_items'
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=1)
-    price = db.Column(db.Float, nullable=False)  # precio unitario al momento del pedido
- 
+    price = db.Column(db.Float, nullable=False)  # precio unitario en el momento del pedido
+
     order = db.relationship('Order', backref=db.backref('items', cascade='all, delete-orphan'))
     book = db.relationship('Book')
- 
+
     def line_total(self):
+        """Subtotal del ítem del pedido"""
         return (self.price or 0) * (self.quantity or 0)
- 
+
     def __repr__(self):
         return f'<OrderItem book_id={self.book_id} qty={self.quantity} price={self.price}>'
