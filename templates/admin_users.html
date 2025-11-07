@@ -23,10 +23,6 @@
                 <td>{{ user.role }}</td>
                 <td>
                     <a href="{{ url_for('admin_edit_user', user_id=user.id) }}">Editar</a>
-                    <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST">
-                        <button type="submit">Eliminar</button>
-                    </form>
-
                 </td>
             </tr>
             {% endfor %}
