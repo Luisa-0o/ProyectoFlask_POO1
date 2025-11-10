@@ -4,13 +4,68 @@
 <div class="container mt-4">
   <h2 class="mb-4">Detalle del Pedido #{{ order.id }}</h2>
 
-  <p><strong>Fecha:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '-' }}</p>
-  <p><strong>Estado:</strong> {{ order.status or 'Pendiente' }}</p>
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <p><strong>Usuario:</strong> {{ order.user.username }} ({{ order.user.email }})</p>
+      <p><strong>Fecha:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '-' }}</p>
+    </div>
+    <div class="col-md-6">
+      <p><strong>Estado actual:</strong> 
+        <span class="badge
+          {% if order.status == 'created' %}bg-secondary
+          {% elif order.status == 'paid' %}bg-primary
+          {% elif order.status == 'shipped' %}bg-info
+          {% elif order.status == 'delivered' %}bg-success
+          {% elif order.status == 'cancelled' %}bg-danger
+          {% endif %}">
+          {{ order.status or 'Pendiente' }}
+        </span>
+      </p>
+    </div>
+  </div>
 
-  <table class="table">
+  <!-- Sección para editar estado (solo admin) -->
+  {% if current_user.is_admin %}
+    <div class="card mb-4 bg-light">
+      <div class="card-body">
+        <h5 class="card-title">✏️ Editar Estado del Pedido</h5>
+        <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}" class="d-flex gap-2 align-items-center">
+          <select name="status" class="form-select" style="max-width: 200px;">
+            <option value="created" {% if order.status == 'created' %}selected{% endif %}>Creado</option>
+            <option value="paid" {% if order.status == 'paid' %}selected{% endif %}>Pagado</option>
+            <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Enviado</option>
+            <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Entregado</option>
+            <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelado</option>
+          </select>
+          <button type="submit" class="btn btn-primary">Actualizar Estado</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Sección para cancelar pedido (solo usuarios) -->
+  {% if not current_user.is_admin and order.status in ['created', 'paid'] %}
+    <div class="card mb-4 bg-warning bg-opacity-10 border-warning">
+      <div class="card-body">
+        <h5 class="card-title">⚠️ Cancelar Pedido</h5>
+        <p class="card-text text-muted">Puedes cancelar este pedido. El stock de los libros será restaurado automáticamente.</p>
+        <form method="POST" action="{{ url_for('cancel_order', order_id=order.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que quieres cancelar este pedido?');">
+            <i class="bi bi-x-circle"></i> Cancelar Pedido
+          </button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  <h4 class="mb-3">Artículos del Pedido</h4>
+  <table class="table table-striped">
     <thead class="table-dark">
       <tr>
-        <th>Libro</th><th>Cantidad</th><th>Precio unidad</th><th>Subtotal</th>
+        <th>Libro</th>
+        <th>Cantidad</th>
+        <th>Precio unidad</th>
+        <th>Subtotal</th>
       </tr>
     </thead>
     <tbody>
@@ -25,9 +80,14 @@
     </tbody>
   </table>
 
-  <h4 class="text-end">Total: ${{ "%.2f"|format(order.total or 0) }}</h4>
-  <div class="text-center mt-3">
-    <a href="{{ url_for('view_orders') }}" class="btn btn-secondary">Volver al Historial</a>
+  <h4 class="text-end mt-4">Total: <strong>${{ "%.2f"|format(order.total or 0) }}</strong></h4>
+
+  <div class="text-center mt-4">
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('admin_orders') }}" class="btn btn-secondary">Volver a Gestionar Pedidos</a>
+    {% else %}
+      <a href="{{ url_for('view_orders') }}" class="btn btn-secondary">Volver al Historial</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

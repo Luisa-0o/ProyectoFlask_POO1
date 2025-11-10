@@ -160,6 +160,7 @@ def create_book():
         book = Book(
             title=form.title.data,
             author=form.author.data,
+            category=form.category.data,
             price=form.price.data,
             stock=form.stock.data,
             description=form.description.data,
@@ -193,6 +194,7 @@ def edit_book(book_id):
 
         book.title = form.title.data
         book.author = form.author.data
+        book.category = form.category.data
         book.price = form.price.data
         book.stock = form.stock.data
         book.description = form.description.data
@@ -280,15 +282,24 @@ def admin_delete_user(user_id):
 @app.route('/catalogo')
 @login_required
 def catalogo():
-    query = request.args.get('q', '')
+    query = request.args.get('q', '').strip()
+    selected_category = request.args.get('category', '').strip()
+
+    books_q = Book.query
     if query:
-        books = Book.query.filter(
+        books_q = books_q.filter(
             (Book.title.ilike(f'%{query}%')) |
             (Book.author.ilike(f'%{query}%'))
-        ).order_by(Book.id.desc()).all()
-    else:
-        books = Book.query.order_by(Book.id.desc()).all()
-    return render_template('catalogo.html', books=books, query=query)
+        )
+    if selected_category:
+        books_q = books_q.filter(Book.category == selected_category)
+
+    books = books_q.order_by(Book.id.desc()).all()
+
+    # Obtener lista de categorías existentes (no nulas)
+    categories = [c[0] for c in db.session.query(Book.category).filter(Book.category != None).distinct().order_by(Book.category).all()]
+
+    return render_template('catalogo.html', books=books, query=query, categories=categories, selected_category=selected_category)
 
 
 # --------------------------
@@ -426,6 +437,91 @@ def view_order(order_id):
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('view_orders'))
     return render_template('order_detail.html', order=order)
+
+
+@app.route('/orders/<int:order_id>/cancel', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    """Permite al usuario cancelar su pedido"""
+    order = Order.query.get_or_404(order_id)
+
+    # Verificar que el pedido pertenezca al usuario
+    if order.user_id != current_user.id:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('view_orders'))
+
+    # Permitir cancelación solo en ciertos estados
+    if order.status not in ['created', 'paid']:
+        flash(f'No puedes cancelar un pedido en estado "{order.status}".', 'warning')
+        return redirect(url_for('view_order', order_id=order_id))
+
+    # Restaurar el stock de los libros
+    for item in order.items:
+        item.book.stock += item.quantity
+
+    # Cambiar estado a cancelado
+    order.status = 'cancelled'
+    db.session.commit()
+
+    flash('✅ Pedido cancelado correctamente. El stock ha sido restaurado.', 'success')
+    return redirect(url_for('view_order', order_id=order_id))
+
+
+# --- RUTAS DE ADMIN PARA GESTIONAR PEDIDOS DE USUARIOS ---
+@app.route('/admin/orders')
+@login_required
+@admin_required
+def admin_orders():
+    """Ver todos los pedidos de usuarios no-admin"""
+    # Obtener todos los usuarios que NO son admins
+    non_admin_users = User.query.filter_by(role='user').all()
+    user_ids = [user.id for user in non_admin_users]
+    
+    # Obtener todos los pedidos de esos usuarios
+    orders = Order.query.filter(Order.user_id.in_(user_ids)).order_by(Order.id.desc()).all()
+    
+    return render_template('admin_orders.html', orders=orders)
+
+
+@app.route('/admin/orders/<int:order_id>')
+@login_required
+@admin_required
+def admin_view_order(order_id):
+    """Ver detalles de un pedido de usuario (solo admin)"""
+    order = Order.query.get_or_404(order_id)
+    
+    # Verificar que el pedido sea de un usuario no-admin
+    if order.user.is_admin:
+        flash('No puedes ver pedidos de admins.', 'danger')
+        return redirect(url_for('admin_orders'))
+    
+    return render_template('order_detail.html', order=order)
+
+
+@app.route('/admin/orders/<int:order_id>/status', methods=['POST'])
+@login_required
+@admin_required
+def admin_update_order_status(order_id):
+    """Actualizar el estado de un pedido de usuario"""
+    order = Order.query.get_or_404(order_id)
+    
+    # Verificar que el pedido sea de un usuario no-admin
+    if order.user.is_admin:
+        flash('No puedes editar pedidos de admins.', 'danger')
+        return redirect(url_for('admin_orders'))
+    
+    new_status = request.form.get('status', '').strip()
+    valid_statuses = ['created', 'paid', 'shipped', 'delivered', 'cancelled']
+    
+    if new_status not in valid_statuses:
+        flash(f'Estado inválido. Debe ser uno de: {", ".join(valid_statuses)}', 'danger')
+        return redirect(url_for('admin_view_order', order_id=order_id))
+    
+    order.status = new_status
+    db.session.commit()
+    
+    flash(f'✅ Estado del pedido actualizado a "{new_status}".', 'success')
+    return redirect(url_for('admin_view_order', order_id=order_id))
 
 
 # --- Prueba conexión BD ---

@@ -3,11 +3,20 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">Panel de Administración</h1>
-    <a href="{{ url_for('admin_books') }}" class="btn btn-info mb-3">Gestionar Libros</a>
-    <a href="{{ url_for('admin_users') }}" class="btn btn-info mb-3">👥 Gestionar Usuarios</a>
+    
+    <div class="mb-4">
+      <a href="{{ url_for('admin_books') }}" class="btn btn-info me-2">
+        <i class="bi bi-book-fill"></i> Gestionar Libros
+      </a>
+      <a href="{{ url_for('admin_users') }}" class="btn btn-info me-2">
+        <i class="bi bi-people-fill"></i> Gestionar Usuarios
+      </a>
+      <a href="{{ url_for('admin_orders') }}" class="btn btn-warning me-2">
+        <i class="bi bi-box-seam"></i> Gestionar Pedidos
+      </a>
+    </div>
 
-
-    <p>Bienvenido, {{ current_user.username }} (Admin)</p>
+    <p class="text-muted">Bienvenido, <strong>{{ current_user.username }}</strong> (Admin)</p>
 
     <h3>Lista de Usuarios</h3>
     <table class="table table-striped mt-3">

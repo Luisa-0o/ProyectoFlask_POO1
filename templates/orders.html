@@ -20,7 +20,18 @@
       <tr>
         <td>{{ order.id }}</td>
         <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '-' }}</td>
-        <td>{{ order.status or 'Pendiente' }}</td>
+        <td>
+          <span class="badge
+            {% if order.status == 'created' %}bg-secondary
+            {% elif order.status == 'paid' %}bg-primary
+            {% elif order.status == 'shipped' %}bg-info
+            {% elif order.status == 'delivered' %}bg-success
+            {% elif order.status == 'cancelled' %}bg-danger
+            {% else %}bg-secondary
+            {% endif %}">
+            {{ order.status or 'Pendiente' }}
+          </span>
+        </td>
         <td>${{ "%.2f"|format(order.total or 0) }}</td>
         <td>
           <a href="{{ url_for('view_order', order_id=order.id) }}" class="btn btn-sm btn-primary">Ver</a>

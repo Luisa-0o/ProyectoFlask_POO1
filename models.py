@@ -48,6 +48,8 @@ class Book(db.Model):
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
+    # Categoría del libro (opcional)
+    category = db.Column(db.String(50))
     cover_filename = db.Column(db.String(255))  # nombre de archivo de la portada
 
     def image_url(self):

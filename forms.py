@@ -5,6 +5,7 @@ from models import User
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import IntegerField, FloatField, TextAreaField
 from wtforms.validators import NumberRange, Optional
+from wtforms import StringField
 
 class RegisterForm(FlaskForm):
     username = StringField('Nombre', validators=[DataRequired(), Length(3,80)])
@@ -35,6 +36,7 @@ class ChangePasswordForm(FlaskForm):
 class BookForm(FlaskForm):
     title = StringField('Título', validators=[DataRequired(), Length(max=200)])
     author = StringField('Autor', validators=[DataRequired(), Length(max=200)])
+    category = StringField('Categoría', validators=[Optional(), Length(max=100)])
     price = FloatField('Precio', validators=[DataRequired(), NumberRange(min=0)])
     stock = IntegerField('Stock', validators=[DataRequired(), NumberRange(min=0)])
     description = TextAreaField('Descripción', validators=[Optional(), Length(max=2000)])

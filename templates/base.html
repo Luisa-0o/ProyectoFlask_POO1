@@ -32,26 +32,42 @@
           <ul class="navbar-nav ms-auto align-items-center">
 
             {% if current_user.is_authenticated %}
-              <!-- Enlace al catálogo -->
-              <li class="nav-item me-3">
-                <a class="nav-link fw-semibold" href="{{ url_for('catalogo') }}">
-                  <i class="bi bi-book-half"></i> Catálogo
-                </a>
-              </li>
+              {% if not current_user.is_admin %}
+                <!-- Enlace al catálogo (solo usuarios normales) -->
+                <li class="nav-item me-3">
+                  <a class="nav-link fw-semibold" href="{{ url_for('catalogo') }}">
+                    <i class="bi bi-book-half"></i> Catálogo
+                  </a>
+                </li>
 
-              <!-- Enlace al carrito -->
-              <li class="nav-item me-3">
-                <a class="nav-link fw-semibold" href="{{ url_for('view_cart') }}">
-                  <i class="bi bi-cart4"></i> Carrito
-                </a>
-              </li>
+                <!-- Enlace al carrito (solo usuarios normales) -->
+                <li class="nav-item me-3">
+                  <a class="nav-link fw-semibold" href="{{ url_for('view_cart') }}">
+                    <i class="bi bi-cart4"></i> Carrito
+                  </a>
+                </li>
 
-              <!-- Enlace al historial de pedidos -->
-              <li class="nav-item me-3">
-                <a class="nav-link fw-semibold" href="{{ url_for('view_orders') }}">
-                  <i class="bi bi-box-seam"></i> Mis Pedidos
-                </a>
-              </li>
+                <!-- Enlace al historial de pedidos (usuarios normales) -->
+                <li class="nav-item me-3">
+                  <a class="nav-link fw-semibold" href="{{ url_for('view_orders') }}">
+                    <i class="bi bi-box-seam"></i> Mis Pedidos
+                  </a>
+                </li>
+              {% else %}
+                <!-- Enlace al catálogo (admins pueden ver para referencia) -->
+                <li class="nav-item me-3">
+                  <a class="nav-link fw-semibold" href="{{ url_for('catalogo') }}">
+                    <i class="bi bi-book-half"></i> Catálogo
+                  </a>
+                </li>
+
+                <!-- Enlace a gestión de pedidos (solo admins) -->
+                <li class="nav-item me-3">
+                  <a class="nav-link fw-semibold" href="{{ url_for('admin_orders') }}">
+                    <i class="bi bi-box-seam"></i> Gestionar Pedidos
+                  </a>
+                </li>
+              {% endif %}
 
               <!-- Enlace solo visible para administradores -->
               {% if current_user.is_admin %}

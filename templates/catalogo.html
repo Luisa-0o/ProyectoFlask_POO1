@@ -6,10 +6,58 @@
 <div class="container mt-4">
   <h2>📚 Catálogo de libros</h2>
 
-  <form method="GET" action="{{ url_for('catalogo') }}" class="d-flex my-3">
-    <input class="form-control me-2" type="search" name="q" placeholder="Buscar por título o autor" value="{{ query }}">
-    <button class="btn btn-primary" type="submit">Buscar</button>
+  <form id="searchForm" method="GET" action="{{ url_for('catalogo') }}" class="d-flex my-3 gap-2">
+    <input 
+      id="searchInput"
+      class="form-control me-2" 
+      type="search" 
+      name="q" 
+      placeholder="Buscar por título o autor" 
+      value="{{ query }}"
+      autocomplete="off">
+
+    <!-- Filtro por categoría -->
+    <select id="categorySelect" name="category" class="form-select me-2" style="max-width:240px">
+      <option value="">Todas las categorías</option>
+      {% if categories %}
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if cat==selected_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      {% endif %}
+    </select>
+
+    <button class="btn btn-primary" type="submit" id="searchBtn">Buscar</button>
   </form>
+
+  <script>
+    // Auto-submit el formulario mientras escribes (con debounce de 500ms)
+    let searchTimeout;
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const searchBtn = document.getElementById('searchBtn');
+
+    function submitSearch() {
+      searchForm.submit();
+    }
+
+    // Buscar en tiempo real mientras escribes
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(submitSearch, 700);
+    });
+
+    // Cambiar categoría y buscar inmediatamente
+    categorySelect.addEventListener('change', function() {
+      submitSearch();
+    });
+
+    // Mantener el botón funcional para quienes lo prefieran
+    searchBtn.addEventListener('click', function(e) {
+      clearTimeout(searchTimeout);
+      submitSearch();
+    });
+  </script>
 
   <div class="row">
     {% if books %}
