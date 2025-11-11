@@ -4,6 +4,7 @@
   <h2 class="mb-4">💳 Pago del pedido</h2>
 
   <form method="POST" action="{{ url_for('process_payment') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {{ csrf_token() }}
 
     <!-- Información del comprador -->

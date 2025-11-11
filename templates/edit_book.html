@@ -2,6 +2,7 @@
 {% block content %}
 <h2>{{ action }} libro</h2>
 <form method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {{ form.hidden_tag() }}
   <div class="mb-3">
     {{ form.title.label }} {{ form.title(class="form-control") }}
