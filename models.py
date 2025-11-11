@@ -1,13 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import url_for  # ✅ necesario para image_url()
+from flask import url_for 
 
 db = SQLAlchemy()
 
-# ---------------------------
+
 # MODELO DE USUARIO
-# ---------------------------
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -17,6 +17,9 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(20), default='user')  # puede ser 'user' o 'admin'
+    # Preferencias del usuario: dos categorías favoritas (opcional)
+    fav_category1 = db.Column(db.String(50))
+    fav_category2 = db.Column(db.String(50))
 
     def set_password(self, password):
         """Guarda la contraseña encriptada"""
@@ -35,9 +38,9 @@ class User(UserMixin, db.Model):
         return f'<User {self.username}>'
 
 
-# ---------------------------
+
 # MODELO DE LIBRO
-# ---------------------------
+
 
 class Book(db.Model):
     __tablename__ = 'books'
@@ -62,26 +65,24 @@ class Book(db.Model):
         return f'<Book {self.title}>'
 
 
-# ---------------------------
+
 # MODELO DE CARRITO
-# ---------------------------
+
 
 class Cart(db.Model):
     __tablename__ = 'carts'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-
-    # relación uno a uno con el usuario
     user = db.relationship('User', backref=db.backref('cart', uselist=False))
 
     def __repr__(self):
         return f'<Cart user_id={self.user_id}>'
 
 
-# ---------------------------
+
 # MODELO DE ITEMS DEL CARRITO
-# ---------------------------
+
 
 class CartItem(db.Model):
     __tablename__ = 'cart_items'
@@ -101,16 +102,16 @@ class CartItem(db.Model):
         return f'<CartItem book_id={self.book_id} qty={self.quantity}>'
 
 
-# ---------------------------
+
 # MODELOS DE PEDIDO
-# ---------------------------
+
 
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    status = db.Column(db.String(50), default='created')  # created, paid, shipped, cancelled...
+    status = db.Column(db.String(50), default='created')
     total = db.Column(db.Float, default=0.0)
 
     user = db.relationship('User', backref=db.backref('orders', order_by='Order.id.desc()'))

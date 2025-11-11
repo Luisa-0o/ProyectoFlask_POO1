@@ -78,17 +78,7 @@
                 </li>
               {% endif %}
 
-              <!-- Opciones del usuario -->
-              <li class="nav-item me-2">
-                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('change_password') }}">
-                  <i class="bi bi-key-fill"></i> Cambiar contraseña
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="btn btn-danger btn-sm" href="{{ url_for('logout') }}">
-                  <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-                </a>
-              </li>
+              <!-- Opciones del usuario (moved to profile page) -->
 
             {% else %}
               <!-- Si no está autenticado -->

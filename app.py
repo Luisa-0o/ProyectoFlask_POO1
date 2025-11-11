@@ -76,8 +76,10 @@ def register():
             user.role = 'admin'  # Primer usuario será admin
         db.session.add(user)
         db.session.commit()
-        flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
-        return redirect(url_for('login'))
+        # Loguear al usuario automáticamente y pedir que seleccione sus categorías favoritas
+        login_user(user)
+        flash('Registro exitoso. Por favor selecciona 2 categorías favoritas.', 'success')
+        return redirect(url_for('select_favs'))
     return render_template('register.html', form=form)
 
 
@@ -299,7 +301,42 @@ def catalogo():
     # Obtener lista de categorías existentes (no nulas)
     categories = [c[0] for c in db.session.query(Book.category).filter(Book.category != None).distinct().order_by(Book.category).all()]
 
-    return render_template('catalogo.html', books=books, query=query, categories=categories, selected_category=selected_category)
+    # Recomendaciones basadas en las 2 categorías favoritas del usuario (solo para usuarios normales)
+    recommended_books = []
+    if current_user.is_authenticated and not getattr(current_user, 'is_admin', False):
+        fav1 = getattr(current_user, 'fav_category1', None)
+        fav2 = getattr(current_user, 'fav_category2', None)
+        favs = [c for c in (fav1, fav2) if c]
+        if favs:
+            recommended_books = Book.query.filter(Book.category.in_(favs)).order_by(Book.id.desc()).limit(8).all()
+
+    return render_template('catalogo.html', books=books, query=query, categories=categories, selected_category=selected_category, recommended_books=recommended_books)
+
+
+@app.route('/select-favs', methods=['GET', 'POST'])
+@login_required
+def select_favs():
+    # Obtener categorías disponibles
+    categories = [c[0] for c in db.session.query(Book.category).filter(Book.category != None).distinct().order_by(Book.category).all()]
+
+    # Si es admin, no necesita seleccionar preferencias
+    if current_user.is_authenticated and getattr(current_user, 'is_admin', False):
+        return redirect(url_for('admin'))
+
+    if request.method == 'POST':
+        selected = request.form.getlist('categories')
+        # Aceptar exactamente 2
+        if len(selected) != 2:
+            flash('Por favor selecciona exactamente 2 categorías.', 'warning')
+            return render_template('select_favs.html', categories=categories)
+
+        current_user.fav_category1 = selected[0]
+        current_user.fav_category2 = selected[1]
+        db.session.commit()
+        flash('✅ Preferencias guardadas.', 'success')
+        return redirect(url_for('catalogo'))
+
+    return render_template('select_favs.html', categories=categories)
 
 
 # --------------------------
@@ -545,14 +582,21 @@ def test_db():
 # ---------------------- PÁGINA DE PAGO ----------------------
 @app.route('/payment', methods=['GET', 'POST'])
 @login_required
+
 def payment():
+    # Buscar el último pedido del usuario en estado 'created'
+    order = Order.query.filter_by(user_id=current_user.id).order_by(Order.id.desc()).filter(Order.status == 'created').first()
+
     if request.method == 'POST':
         request.form.get('payment_method')
         request.form.get('card_number')
         request.form.get('expiry_date')
         request.form.get('cvv')
 
-        # Aquí puedes agregar lógica para validar o registrar el pago.
+        # Marcar el pedido como pagado
+        if order:
+            order.status = 'paid'
+            db.session.commit()
         flash('✅ Pago procesado correctamente. ¡Gracias por tu compra!', 'success')
         return redirect(url_for('catalogo'))  # O una página de confirmación
 

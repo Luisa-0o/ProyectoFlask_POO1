@@ -20,8 +20,7 @@
                 <i class="bi bi-speedometer2"></i> Administrar
                 </a>
               {% endif %}
-              <a href="{{ url_for('change_password') }}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-key-fill"></i> Cambiar contraseña</a>
-              <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+              {# Los botones de cambiar contraseña y cerrar sesión se han movido a las tarjetas inferiores #}
             {% else %}
               <h4 class="card-title">Bienvenido</h4>
               <p class="text-muted">Por favor <a href="{{ url_for('login') }}">ingresa</a> o <a href="{{ url_for('register') }}">regístrate</a>.</p>
@@ -35,16 +34,22 @@
       <div class="col-md-6">
         <div class="card shadow-sm mb-3">
           <div class="card-body">
-            <h5 class="card-title">Información</h5>
-            <p class="card-text text-muted">Aquí puedes ver los detalles de tu cuenta.</p>
+            <h5 class="card-title">Cambiar contraseña</h5>
+            <p class="card-text text-muted"></p>
+            <a href="{{ url_for('change_password') }}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-key-fill"></i> Cambiar contraseña
+            </a>
           </div>
         </div>
       </div>
       <div class="col-md-6">
         <div class="card shadow-sm mb-3">
           <div class="card-body">
-            <h5 class="card-title">Acciones</h5>
-            <p class="card-text text-muted">Puedes cambiar tu contraseña o cerrar sesión desde aquí.</p>
+            <h5 class="card-title">Salir</h5>
+            <p class="card-text text-muted"></p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Cerrar sesión?');">
+              <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            </a>
           </div>
         </div>
       </div>
