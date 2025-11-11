@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from urllib.parse import urlparse, urljoin
 from sqlalchemy.exc import SQLAlchemyError
+from flask_wtf import CSRFProtect
 import os
 import logging
 from functools import wraps
@@ -21,6 +22,7 @@ app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app, db)
+csrf = CSRFProtect(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 

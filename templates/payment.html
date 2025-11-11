@@ -6,6 +6,7 @@
   <h2 class="text-center mb-4">💳 Procesar Pago</h2>
 
   <form method="POST" class="p-4 border rounded shadow-sm bg-light">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="mb-3">
       <label for="payment_method" class="form-label">Método de pago</label>
       <select name="payment_method" id="payment_method" class="form-select" required>
