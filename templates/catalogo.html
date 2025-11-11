@@ -38,10 +38,17 @@
           <div class="col-md-3 mb-3">
             <div class="card h-100">
               {% if book.cover_filename %}
-                <img src="{{ url_for('static', filename='uploads/' + book.cover_filename) }}" class="card-img-top" style="height:160px; object-fit:contain; background:#f8f9fa">
+                <img src="{{ url_for('static', filename='uploads/' + book.cover_filename) }}" 
+                  alt="Portada del libro {{ book.title }}" 
+                  class="card-img-top" 
+                  style="height:160px; object-fit:contain; background:#f8f9fa">
               {% else %}
-                <img src="{{ url_for('static', filename='no_cover.png') }}" class="card-img-top" style="height:160px; object-fit:contain; background:#f8f9fa">
+                <img src="{{ url_for('static', filename='no_cover.png') }}" 
+                  alt="Sin portada disponible" 
+                  class="card-img-top" 
+                  style="height:160px; object-fit:contain; background:#f8f9fa">
               {% endif %}
+
               <div class="card-body p-2">
                 <h6 class="card-title mb-1">{{ book.title }}</h6>
                 <p class="card-text small mb-1">{{ book.author }}</p>
