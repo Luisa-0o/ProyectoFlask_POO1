@@ -487,7 +487,7 @@ def cancel_order(order_id):
 
     # Verificar que el pedido pertenezca al usuario
     if order.user_id != current_user.id:
-        flash('Acceso denegado.', 'danger')
+        flash('Acceso no permitido.', 'danger')
         return redirect(url_for('view_orders'))
 
     # Permitir cancelación solo en ciertos estados
@@ -615,7 +615,7 @@ def view_invoice(order_id):
     
     # Verificar que el pedido pertenezca al usuario actual o que sea admin
     if order.user_id != current_user.id and not current_user.is_admin:
-        flash('Acceso denegado.', 'danger')
+        flash('Acceso restringido.', 'danger')
         return redirect(url_for('view_orders'))
     
     return render_template('invoice.html', order=order, now=datetime.now())
