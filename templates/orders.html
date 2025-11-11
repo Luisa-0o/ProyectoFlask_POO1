@@ -34,7 +34,8 @@
         </td>
         <td>${{ "%.2f"|format(order.total or 0) }}</td>
         <td>
-          <a href="{{ url_for('view_order', order_id=order.id) }}" class="btn btn-sm btn-primary">Ver</a>
+          <a href="{{ url_for('view_order', order_id=order.id) }}" class="btn btn-sm btn-primary">Ver Detalles</a>
+          <a href="{{ url_for('view_invoice', order_id=order.id) }}" class="btn btn-sm btn-outline-info">📄 Factura</a>
         </td>
       </tr>
       {% endfor %}

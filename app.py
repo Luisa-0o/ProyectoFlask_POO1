@@ -12,6 +12,7 @@ from flask_wtf import CSRFProtect
 import os
 import logging
 from functools import wraps
+from datetime import datetime
 
 # --- Configuración inicial ---
 load_dotenv()
@@ -602,7 +603,22 @@ def payment():
         flash('✅ Pago procesado correctamente. ¡Gracias por tu compra!', 'success')
         return redirect(url_for('catalogo'))  # O una página de confirmación
 
-    return render_template('payment.html')
+    return render_template('payment.html', order=order)
+
+
+# --- VER FACTURA ---
+@app.route('/invoice/<int:order_id>')
+@login_required
+def view_invoice(order_id):
+    """Muestra la factura del pedido"""
+    order = Order.query.get_or_404(order_id)
+    
+    # Verificar que el pedido pertenezca al usuario actual o que sea admin
+    if order.user_id != current_user.id and not current_user.is_admin:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('view_orders'))
+    
+    return render_template('invoice.html', order=order, now=datetime.now())
 
 
 # --- Ejecutar aplicación ---
